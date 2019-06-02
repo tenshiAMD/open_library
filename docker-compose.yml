@@ -1,0 +1,70 @@
+version: "3.7"
+services:
+  web:
+    image: tenshiamd/ruby:2.6
+    deploy:
+      replicas: 3
+      restart_policy:
+        condition: ${WEB_RESTART_MODE}
+    command: >
+      bash -c "bundle install &&
+      bundle exec puma -C config/puma.rb"
+    environment:
+      - PORT=80
+      - RAILS_ENV=${WEB_RAILS_ENV}
+      - RAILS_VERSION=${WEB_RAILS_VERSION}
+      - RUBY_VERSION=${WEB_RUBY_VERSION}
+    expose:
+      - 80
+    volumes:
+      - .:/var/www
+    networks:
+      - back_tier
+  load_balancer:
+    image: dockercloud/haproxy
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: ${WEB_RESTART_MODE}
+    links:
+      - web
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - ${WEB_RAILS_PORT}:80
+    networks:
+      - back_tier
+      - front_tier
+  elasticsearch:
+    image: elasticsearch:6.7.2
+    ports:
+      - 9200:9200
+      - 9300:9300
+    environment:
+      - discovery.type=single-node
+  postgresql:
+    image: sameersbn/postgresql:latest
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: ${PG_RESTART_MODE}
+    environment:
+      - PG_PASSWORD=${PG_PASSWORD}
+    volumes:
+      - ./docker/data/postgresql:/var/lib/postgresql
+  redis:
+    image: tenshiamd/redis:5-alpine
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: ${REDIS_RESTART_MODE}
+    command: redis-server
+    networks:
+      - back_tier
+    volumes:
+      - ./docker/data/redis:/var/lib/redis
+networks:
+  back_tier:
+    driver: bridge
+  front_tier:
+    driver: bridge

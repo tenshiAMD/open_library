@@ -30,3 +30,16 @@
 # Ignore IDE files
 /.idea
 /.DS_Store
+
+# Ignore docker related files
+/docker/data/*
+
+/public/packs
+/public/packs-test
+/node_modules
+/yarn-error.log
+yarn-debug.log*
+.yarn-integrity
+
+.env*
+!.env-sample

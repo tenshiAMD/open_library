@@ -7,20 +7,24 @@ It will be used to allow general access to public documents which currently avai
 2. Admin Document Management
 
 ## Key Features
-1. View document file/s directly thru browser
+1. View document file/s directly via browser
 2. Download document file/s
-3. Share document file/s as email
+3. Share document file/s via email
 
 ## Compatibility
 
-### Ruby
+#### Ruby
 - 2.6
 
-### Rails
+#### Rails
 - 6.0 
 
-### Database
+#### Database
 - PostgreSQL
 
-### Search Engine
+#### Search Engine
 - Elasticsearch
+
+
+- bin/bundle exec rails active_storage:install
+- bin/bundle exec rails webpacker:install
