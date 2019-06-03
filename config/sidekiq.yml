@@ -1,0 +1,20 @@
+---
+:verbose: false
+
+# Set timeout to 8 on Heroku, longer if you manage your own systems.
+:timeout: 30
+
+:concurrency: 5
+:pidfile: tmp/pids/sidekiq.pid
+
+:queues:
+  - default
+  - mailers
+  - low_priority
+
+development:
+  :concurrency: 10
+staging:
+  :concurrency: 15
+production:
+  :concurrency: 15
