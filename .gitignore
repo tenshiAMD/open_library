@@ -43,3 +43,7 @@ yarn-debug.log*
 
 .env*
 !.env-sample
+
+.rubocop*
+!.rubocop.yml
+!.rubocop/rubocop-todo.yml

@@ -1,8 +1,8 @@
-require_relative 'boot'
+require_relative "boot"
 
-require 'rails/all'
+require "rails/all"
 
-require 'elasticsearch/rails/instrumentation'
+require "elasticsearch/rails/instrumentation"
 
 # Require the gems listed in Gemfile, including any gems
 # you've limited to :test, :development, or :production.
@@ -18,7 +18,7 @@ module OpenLibrary
     # -- all .rb files in that directory are automatically loaded after loading
     # the framework and any gems in your application.
 
-    config.action_mailer.default_url_options = { host: 'localhost', port: 3000 }
+    config.action_mailer.default_url_options = { host: "localhost", port: 3000 }
 
     config.active_job.queue_adapter = :inline
 

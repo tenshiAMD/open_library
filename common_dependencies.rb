@@ -12,7 +12,7 @@ group :development, :test do
   gem "binding_of_caller"
 
   gem "spring"
-  gem 'spring-watcher-listen', '~> 2.0.0'
+  gem "spring-watcher-listen", "~> 2.0.0"
   gem "spring-commands-rspec"
 
   # gem 'marginalia'
@@ -21,11 +21,14 @@ group :development, :test do
   gem "rspec-activejob"
 
   gem "fuubar"
+end
 
+group :development, :test do
   gem "codeclimate-test-reporter", require: false
   gem "simplecov", require: false
 
   gem "rubocop", require: false
+  gem "rubocop-performance", require: false
   gem "rubocop-junit-formatter"
   gem "inch", require: false
   gem "scss_lint", require: false

@@ -18,7 +18,7 @@ ActiveAdmin.register Document do
   filter :created_at
   filter :updated_at
 
-  form partial: '/activeadmin/documents/form'
+  form partial: "/activeadmin/documents/form"
 
   show do
     attributes_table do

@@ -1,0 +1,18 @@
+require:
+  - rubocop-performance
+
+inherit_from:
+  - 'https://raw.githubusercontent.com/CDAsia/guides/master/style/ruby/.rubocop.yml'
+  - '.rubocop/rubocop-todo.yml'
+
+AllCops:
+  TargetRubyVersion: 2.5
+  Exclude:
+    - 'bin/**/*'
+    - 'vendor/**/*'
+    - '**/spec/dummy/**/*'
+    - 'node_modules/**/*'
+    - 'db/schema.rb'
+
+Rails:
+  Enabled: true

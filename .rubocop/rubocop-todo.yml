@@ -1,0 +1,11 @@
+Metrics/BlockLength:
+  CountComments: false
+  Exclude:
+    - '**/spec/**/*'
+    - 'app/admin/**/*'
+    -
+Metrics/LineLength:
+  IgnoredPatterns:
+    - '^\s*#\s.*'
+  Exclude:
+    - '**/spec/**/*'

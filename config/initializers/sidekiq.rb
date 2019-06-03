@@ -27,8 +27,8 @@ if opts.key?(:url)
 end
 
 Sidekiq.default_worker_options = {
-    unique: :until_executing,
-    unique_args: ->(args) { args.first.except("job_id") },
+  unique: :until_executing,
+  unique_args: ->(args) { args.first.except("job_id") },
 }
 
 ##
@@ -37,7 +37,9 @@ Sidekiq.default_worker_options = {
 begin
   require "yell"
   yell_config_file = Rails.root.join("config", "yell-sidekiq.yml")
-  Sidekiq::Logging.logger = yell_config_file.file? ? Yell.load!(yell_config_file) : Yell.new("log/sidekiq.log")
+  logger = Yell.new("log/sidekiq.log")
+  logger = Yell.load!(yell_config_file) if yell_config_file.file?
+  Sidekiq::Logging.logger = logger
 # rubocop:disable Lint/HandleExceptions
 rescue LoadError
   # Do nothing

@@ -4,5 +4,5 @@ Rails.application.routes.draw do
 
   root to: "home#index"
 
-  get '/documents/search', controller: :home, action: :index
+  get "/documents/search", controller: :home, action: :index
 end

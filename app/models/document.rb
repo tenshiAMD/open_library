@@ -1,7 +1,7 @@
 class Document < ApplicationRecord
   include Documents::Searchable
 
-  SOURCES = %w[website]
+  SOURCES = %w[website].freeze
   enum source: SOURCES.freeze
 
   validates :title, :source, presence: true
