@@ -3,4 +3,6 @@ Rails.application.routes.draw do
   ActiveAdmin.routes(self)
 
   root to: "home#index"
+
+  get '/documents/search', controller: :home, action: :index
 end

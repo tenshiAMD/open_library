@@ -1,5 +1,6 @@
 class HomeController < ApplicationController
   def index
-    @documents = Document.all
+    search = Document.search_for(params[:q] || '*')
+    @documents = search.records
   end
 end

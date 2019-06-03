@@ -24,6 +24,10 @@ gem 'devise', git: 'https://github.com/plataformatec/devise', branch: :master
 gem 'sidekiq'
 gem 'yell'
 
+## Search Engine
+gem 'elasticsearch-model', github: 'elastic/elasticsearch-rails', branch: '5.x'
+gem 'elasticsearch-rails', github: 'elastic/elasticsearch-rails', branch: '5.x'
+
 ## Views
 gem 'bootstrap', '~> 4.3.1'
 gem "coffee-rails", '~> 4.0'
