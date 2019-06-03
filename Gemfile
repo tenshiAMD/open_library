@@ -13,6 +13,10 @@ else
 end
 
 gem 'concurrent-ruby', '~> 1.1.5'
+gem 'image_processing', '~> 1.2'
+
+gem 'slim-rails'
+gem 'bootstrap', '~> 4.3.1'
 
 ## Database
 gem 'mysql2'

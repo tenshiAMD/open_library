@@ -5,4 +5,17 @@
 #
 #   movies = Movie.create([{ name: 'Star Wars' }, { name: 'Lord of the Rings' }])
 #   Character.create(name: 'Luke', movie: movies.first)
-User.create!(email: 'admin@example.com', password: 'password', password_confirmation: 'password') if Rails.env.development?
+
+if Rails.env.development?
+  User.create!(email: 'admin@example.com', password: 'password', password_confirmation: 'password')
+
+  Document.destroy_all
+  (1..6).each do |n|
+    document = Document.new
+    document.title = "Document #{n}"
+    document.source = 0
+    file = File.open(Rails.root.join('tmp', "#{n}.pdf"), 'rb')
+    document.file_source.attach(io: file, filename: "#{n}.pdf")
+    document.save
+  end
+end

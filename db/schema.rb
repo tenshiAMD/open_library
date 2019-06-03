@@ -48,10 +48,12 @@ ActiveRecord::Schema.define(version: 2019_06_01_034124) do
   end
 
   create_table "documents", force: :cascade do |t|
-    t.string "title"
-    t.integer "source"
+    t.string "title", null: false
+    t.integer "source", default: 0, null: false
+    t.string "url"
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
+    t.index ["source", "title"], name: "index_documents_on_source_and_title", unique: true
   end
 
   create_table "users", force: :cascade do |t|
