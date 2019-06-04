@@ -1,5 +1,6 @@
 class Document < ApplicationRecord
   include Documents::Searchable
+  include Documents::Shareable
 
   SOURCES = %w[website].freeze
   enum source: SOURCES.freeze

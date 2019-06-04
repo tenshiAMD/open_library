@@ -17,3 +17,14 @@ require("bootstrap")
 //
 // const images = require.context('../images', true)
 // const imagePath = (name) => images(name, true)
+
+$('#emailModel').on('show.bs.modal', function (event) {
+    var button = $(event.relatedTarget);
+    var document_id = button.data('id');
+    var title = button.data('title');
+
+    var modal = $(this);
+    modal.find('.modal-title').text(title);
+    modal.find('.modal-body input').val('');
+    modal.find('#document_id').val(document_id);
+});

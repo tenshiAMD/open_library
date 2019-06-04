@@ -44,6 +44,9 @@
     <!-- /.col-lg-3 -->
 
     <div class="col-lg-9">
+      <% flash.each do |key, value| %>
+        <div class="alert alert-<%= key %> alert-dismissible"><%= value %></div>
+      <% end if flash.present? %>
 
 <!--      <div id="carouselExampleIndicators" class="carousel slide my-4" data-ride="carousel">-->
 <!--        <ol class="carousel-indicators">-->
@@ -93,11 +96,8 @@
               <% rand(1..5).times { ratings << "&#9733;" } %>
                 <small class="text-muted"><%= raw ratings.join.ljust(35, "&#9734;").split(';').join('; ') %></small>
               <br>
-              <span>
-                <%= link_to "Download file", rails_blob_path(document.file_source, disposition: "attachment") %>
-              </span>
-              <br>
-              <a href="#">Share file as Email</a>
+              <%= link_to '<button class="btn btn-sm btn-block btn-info" style="margin: 5px 0;">Download file</button>'.html_safe, rails_blob_path(document.file_source, disposition: "attachment"), style: 'text-decoration: none;' %>
+              <button type="button" class="btn btn-sm btn-block btn-primary" data-toggle="modal" data-target="#emailModel" data-id="<%= document.id  %>" data-title="Share file via Email | <%= document.title %>" style="margin: 5px 0;">Share file via Email</button>
             </div>
           </div>
         </div>
@@ -112,4 +112,34 @@
   </div>
   <!-- /.row -->
 
+</div>
+
+<div class="modal fade" id="emailModel" tabindex="-1" role="dialog" aria-labelledby="emailModelLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="emailModelLabel">New message</h5>
+        <button type="button" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <%= form_tag(documents_share_path,  method: :post) do %>
+        <input type="hidden" id="document_id" name="document_id" value="">
+        <div class="modal-body">
+            <div class="form-group">
+              <label for="recipient-name" class="col-form-label">Recipient:</label>
+              <input type="email" class="form-control" id="recipient-name" name="recipient" required="true">
+            </div>
+            <div class="form-group">
+              <label for="message-text" class="col-form-label">Message:</label>
+              <textarea class="form-control" id="message-text" name="message"></textarea>
+            </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal">Close</button>
+          <button type="submit" class="btn btn-sm btn-primary">Send</button>
+        </div>
+      <% end %>
+    </div>
+  </div>
 </div>
