@@ -61,8 +61,4 @@ group :test do
   gem "teaspoon-mocha"
   gem "selenium-webdriver"
   gem "magic_lamp"
-  source "https://rails-assets.org" do
-    gem "rails-assets-chai"
-    gem "rails-assets-chai-jquery"
-  end
 end
