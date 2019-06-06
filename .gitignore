@@ -47,3 +47,5 @@ yarn-debug.log*
 .rubocop*
 !.rubocop.yml
 !.rubocop/rubocop-todo.yml
+
+coverage

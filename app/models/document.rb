@@ -11,6 +11,8 @@ class Document < ApplicationRecord
   has_one_attached :file_source
 
   def previewable?
+    return false if file_source.blank?
+
     file_source.previewable?
   end
 end

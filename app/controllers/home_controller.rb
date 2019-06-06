@@ -1,6 +1,6 @@
 class HomeController < ApplicationController
   def index
-    search = Document.search_for(search_params[:q] || "*")
+    search = Document.__elasticsearch__.search(search_params[:q] || "*")
     @documents = search.records
   end
 
