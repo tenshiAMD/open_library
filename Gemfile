@@ -3,7 +3,12 @@ git_source(:github) { |repo| "https://github.com/#{repo}.git" }
 
 ruby "2.6.3"
 
-gem "rails", "~> 6.0.0.rc1"
+rails_version = ENV["RAILS_VERSION"] || "~> 6.0.0.rc1"
+if rails_version == "master" || rails_version =~ /stable$/
+  gem "rails", github: "rails/rails", branch: rails_version
+else
+  gem "rails", rails_version # rubocop:disable Bundler/DuplicatedGem
+end
 
 ## Rails Essentials
 ## Reduces boot times through caching; required in config/boot.rb
