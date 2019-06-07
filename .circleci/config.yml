@@ -120,6 +120,11 @@ references:
       name: Restore repo Cache
       keys:
         - v1-repo-{{ .Environment.CIRCLE_SHA1 }}
+  create_coverage_directory: &create_coverage_directory
+    run:
+      name: Create coverage directory
+      command: |
+        mkdir -p ${COVERAGE_DIR}
 jobs:
   checkout_code:
     <<: *ruby_container
@@ -156,6 +161,7 @@ jobs:
       - *run_brakeman
       - *run_rubocop
       - *run_rspec
+      - *create_coverage_directory
       - store_artifacts:
           path: /tmp/test-artifacts
           destination: rails-6-0-test-artifacts
@@ -197,6 +203,7 @@ jobs:
       - *run_brakeman
       - *run_rubocop
       - *run_rspec
+      - *create_coverage_directory
       - store_artifacts:
           path: /tmp/test-artifacts
           destination: rails-6-0-test-artifacts
@@ -238,6 +245,7 @@ jobs:
       - *run_brakeman
       - *run_rubocop
       - *run_rspec
+      - *create_coverage_directory
       - store_artifacts:
           path: /tmp/test-artifacts
           destination: rails-6-0-test-artifacts
