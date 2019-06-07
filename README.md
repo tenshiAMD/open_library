@@ -1,3 +1,7 @@
+[![CircleCI](https://circleci.com/gh/CDAsia/open_library-angel.svg?style=svg&circle-token=48c4427ddee7e616196d67b407293bcbed5927ce)](https://circleci.com/gh/CDAsia/open_library-angel)
+[![Maintainability](https://api.codeclimate.com/v1/badges/cc820bc7b6013fe4593d/maintainability)](https://codeclimate.com/repos/5cf9bfb1cd7bb701b2007373/maintainability)
+[![Test Coverage](https://api.codeclimate.com/v1/badges/cc820bc7b6013fe4593d/test_coverage)](https://codeclimate.com/repos/5cf9bfb1cd7bb701b2007373/test_coverage)
+
 # Open Library
 
 It will be used to allow general access to public documents which currently available only on each branches/agencies of the government.
@@ -24,7 +28,3 @@ It will be used to allow general access to public documents which currently avai
 
 #### Search Engine
 - Elasticsearch
-
-
-- bin/bundle exec rails active_storage:install
-- bin/bundle exec rails webpacker:install
