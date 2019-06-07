@@ -139,6 +139,80 @@ jobs:
           root: /tmp/test-artifacts
           paths:
             - coverage
+  test-rails_6_0_stable:
+    parallelism: 1
+    <<: *ruby_container
+    environment:
+      RAILS_VERSION: 6-0-stable
+      ALLOW_FAILURE: true
+    steps:
+      - *restore_repo
+      - restore_cache:
+          name: Restore bundle cache
+          keys:
+            - v1-rails-6-0-stable-bundle-{{ .Branch }}-{{ checksum "Gemfile" }}
+      - *install_apt_dependencies
+      - *install_bundle_dependencies
+      - save_cache:
+          name: Store bundle cache
+          key: v1-rails-6-0-stable-bundle-{{ .Branch }}-{{ checksum "Gemfile" }}
+          paths:
+            - ~/app/vendor/bundle
+      - *wait_for_db
+      - *setup_database
+      - *run_bundle_audit
+      - *run_brakeman
+      - *run_rubocop
+      - *run_rspec
+      - store_artifacts:
+          path: /tmp/test-artifacts
+          destination: rails-6-0-test-artifacts
+      - store_artifacts:
+          path: /tmp/test-results
+          destination: rails-6-0-raw-test-output
+      - store_test_results:
+          path: /tmp/test-results
+      - persist_to_workspace:
+          root: /tmp/test-artifacts
+          paths:
+            - coverage
+  test-rails_master:
+    parallelism: 1
+    <<: *ruby_container
+    environment:
+      RAILS_VERSION: master
+      ALLOW_FAILURE: true
+    steps:
+      - *restore_repo
+      - restore_cache:
+          name: Restore bundle cache
+          keys:
+            - v1-rails-master-bundle-{{ .Branch }}-{{ checksum "Gemfile" }}
+      - *install_apt_dependencies
+      - *install_bundle_dependencies
+      - save_cache:
+          name: Store bundle cache
+          key: v1-rails-master-bundle-{{ .Branch }}-{{ checksum "Gemfile" }}
+          paths:
+            - ~/app/vendor/bundle
+      - *wait_for_db
+      - *setup_database
+      - *run_bundle_audit
+      - *run_brakeman
+      - *run_rubocop
+      - *run_rspec
+      - store_artifacts:
+          path: /tmp/test-artifacts
+          destination: rails-6-0-test-artifacts
+      - store_artifacts:
+          path: /tmp/test-results
+          destination: rails-6-0-raw-test-output
+      - store_test_results:
+          path: /tmp/test-results
+      - persist_to_workspace:
+          root: /tmp/test-artifacts
+          paths:
+            - coverage
   send-test_coverage:
     <<: *ruby_container
     steps:
@@ -177,6 +251,20 @@ workflows:
       - test-rails_6_0:
           requires:
             - checkout_code
+      - test-rails_6_0_stable:
+          requires:
+            - checkout_code
+          filters:
+            branches:
+              only:
+                - master
+      - test-rails_master:
+          requires:
+            - checkout_code
+          filters:
+            branches:
+              only:
+                - master
       - send-test_coverage:
           requires:
             - test-rails_6_0
