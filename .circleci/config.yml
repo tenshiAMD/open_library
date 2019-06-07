@@ -6,6 +6,8 @@ version: 2
 references:
   workspace_root: &workspace_root
     ~/app
+  pkg_directory: &pkg_directory
+    ~/app/pkg
   ruby_environment: &ruby_environment
     RAILS_ENV: test
     DB: postgres
@@ -97,6 +99,22 @@ references:
     run:
       name: Wait for Elasticsearch
       command: dockerize -wait tcp://localhost:9200 -timeout 1m
+  install_yarn_packages: &install_yarn_packages
+    run:
+      name: Install yarn packages
+      command: yarn install --cwd ~/app/
+  cache_yarn_packages: &cache_yarn_packages
+    save_cache:
+      name: Save Yarn Package Cache
+      key: v1-yarn-{{ checksum "yarn.lock" }}
+      paths:
+        - ~/.cache/yarn
+        - ~/app/node_modules
+  restore_yarn_packages: &restore_yarn_packages
+    restore_cache:
+      name: Restore Yarn Package Cache
+      keys:
+        - v1-yarn-{{ checksum "yarn.lock" }}
   restore_repo: &restore_repo
     restore_cache:
       name: Restore repo Cache
@@ -117,6 +135,7 @@ jobs:
     <<: *ruby_container
     steps:
       - *restore_repo
+      - *restore_yarn_packages
       - restore_cache:
           name: Restore bundle cache
           keys:
@@ -128,6 +147,8 @@ jobs:
           key: v1-rails-6-0-bundle-{{ .Branch }}-{{ checksum "Gemfile" }}
           paths:
             - ~/app/vendor/bundle
+      - *install_yarn_packages
+      - *cache_yarn_packages
       - *wait_for_db
       - *wait_for_elasticsearch
       - *setup_database
@@ -155,6 +176,7 @@ jobs:
       ALLOW_FAILURE: true
     steps:
       - *restore_repo
+      - *restore_yarn_packages
       - restore_cache:
           name: Restore bundle cache
           keys:
@@ -166,6 +188,8 @@ jobs:
           key: v1-rails-6-0-stable-bundle-{{ .Branch }}-{{ checksum "Gemfile" }}
           paths:
             - ~/app/vendor/bundle
+      - *install_yarn_packages
+      - *cache_yarn_packages
       - *wait_for_db
       - *wait_for_elasticsearch
       - *setup_database
@@ -193,6 +217,7 @@ jobs:
       ALLOW_FAILURE: true
     steps:
       - *restore_repo
+      - *restore_yarn_packages
       - restore_cache:
           name: Restore bundle cache
           keys:
@@ -204,6 +229,8 @@ jobs:
           key: v1-rails-master-bundle-{{ .Branch }}-{{ checksum "Gemfile" }}
           paths:
             - ~/app/vendor/bundle
+      - *install_yarn_packages
+      - *cache_yarn_packages
       - *wait_for_db
       - *wait_for_elasticsearch
       - *setup_database
