@@ -93,6 +93,10 @@ references:
     run:
       name: Wait for DB
       command: dockerize -wait tcp://localhost:5432 -timeout 1m
+  wait_for_elasticsearch: &wait_for_elasticsearch
+    run:
+      name: Wait for Elasticsearch
+      command: dockerize -wait tcp://localhost:9200 -timeout 1m
   restore_repo: &restore_repo
     restore_cache:
       name: Restore repo Cache
@@ -125,6 +129,7 @@ jobs:
           paths:
             - ~/app/vendor/bundle
       - *wait_for_db
+      - *wait_for_elasticsearch
       - *setup_database
       - *run_bundle_audit
       - *run_brakeman
@@ -162,6 +167,7 @@ jobs:
           paths:
             - ~/app/vendor/bundle
       - *wait_for_db
+      - *wait_for_elasticsearch
       - *setup_database
       - *run_bundle_audit
       - *run_brakeman
@@ -199,6 +205,7 @@ jobs:
           paths:
             - ~/app/vendor/bundle
       - *wait_for_db
+      - *wait_for_elasticsearch
       - *setup_database
       - *run_bundle_audit
       - *run_brakeman
