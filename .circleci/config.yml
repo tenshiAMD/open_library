@@ -58,13 +58,13 @@ references:
       name: Install gem dependencies
       command: |
         gem install bundler-audit && bundle audit update
-        bundle check --path=~/app/vendor/bundle || bundle install
+        bundle check --path=~/app/vendor/bundle || bundle install || "${ALLOW_FAILURE}" == "true"
   setup_database: &setup_database
     run:
       name: Setup database
       command: |
         cp ~/app/config/database.ci.yml ~/app/config/database.yml
-        ~/app/bin/bundle exec rake db:create db:migrate
+        ~/app/bin/bundle exec rake db:create db:migrate || "${ALLOW_FAILURE}" == "true"
   run_bundle_audit: &run_bundle_audit
     run:
       name: Run bundle audit
@@ -72,20 +72,23 @@ references:
   run_brakeman: &run_brakeman
     run:
       name: Run brakeman
-      command: ~/app/bin/bundle exec brakeman
+      command: ~/app/bin/bundle exec brakeman || "${ALLOW_FAILURE}" == "true"
   run_rubocop: &run_rubocop
     run:
       name: Run rubocop lints
       command: |
         ~/app/bin/bundle exec rubocop \
         --require rubocop/formatter/junit_formatter \
-        --format RuboCop::Formatter::JUnitFormatter -o ${CIRCLE_TEST_REPORTS}/rubocop.xml
+        --format RuboCop::Formatter::JUnitFormatter \
+        -o ${CIRCLE_TEST_REPORTS}/rubocop.xml || "${ALLOW_FAILURE}" == "true"
   run_rspec: &run_rspec
     run:
       name: Run rspec tests
       command: |
-        ~/app/bin/bundle exec rspec -r rspec_junit_formatter \
-        --format RspecJunitFormatter -o ${CIRCLE_TEST_REPORTS}/rspec.xml || "${ALLOW_FAILURE}" == "true"
+        ~/app/bin/bundle exec rspec \
+        -r rspec_junit_formatter \
+        --format RspecJunitFormatter \
+        -o ${CIRCLE_TEST_REPORTS}/rspec.xml || "${ALLOW_FAILURE}" == "true"
   wait_for_db: &wait_for_db
     run:
       name: Wait for DB
