@@ -22,6 +22,7 @@ module OpenLibrary
 
     config.active_job.queue_adapter = :inline
 
-    config.active_storage.queue = :low_priority
+    config.active_storage.queues.analysis = :low_priority
+    config.active_storage.queues.purge = :low_priority
   end
 end
