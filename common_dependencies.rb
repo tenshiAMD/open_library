@@ -19,6 +19,7 @@ group :development, :test do
 
   gem "rspec-rails"
   gem "rspec-activejob"
+  gem "rspec_junit_formatter"
 
   gem "fuubar"
 end

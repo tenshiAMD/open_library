@@ -1,0 +1,182 @@
+# Ruby CircleCI 2.0 configuration file
+#
+# Check https://circleci.com/docs/2.0/language-ruby/ for more details
+#
+version: 2
+references:
+  workspace_root: &workspace_root
+    ~/app
+  ruby_environment: &ruby_environment
+    RAILS_ENV: test
+    DB: postgres
+    DB_HOST: localhost
+    DB_USERNAME: postgres
+    CIRCLE_TEST_REPORTS: /tmp/test-results
+    CIRCLE_ARTIFACTS: /tmp/test-artifacts
+    COVERAGE: true
+    COVERAGE_DIR: /tmp/test-artifacts/coverage
+    BUNDLE_JOBS: 4
+    BUNDLE_RETRY: 3
+    BUNDLE_PATH: ~/app/vendor/bundle
+  database_container: &database_container
+    image: circleci/postgres:10-alpine
+    environment:
+      POSTGRES_USER: postgres
+    working_directory: *workspace_root
+  elasticsearch_container: &elasticsearch_container
+    image: docker.elastic.co/elasticsearch/elasticsearch:6.7.2
+    environment:
+      - cluster.name: elasticsearch
+      - xpack.security.enabled: false
+      - transport.host: localhost
+      - network.host: 127.0.0.1
+      - http.port: 9200
+    working_directory: *workspace_root
+  ruby_container: &ruby_container
+    docker:
+      - image: circleci/ruby:2.6-stretch-node-browsers
+        environment: *ruby_environment
+      - *database_container
+      - *elasticsearch_container
+    working_directory: *workspace_root
+  install_apt_dependencies: &install_apt_dependencies
+    run:
+      name: Install apt dependencies
+      command: |
+        sudo apt-get update -qq \
+          && sudo apt-get install --no-install-recommends -y \
+            libxrender1 \
+            libxext6 \
+            xz-utils \
+            default-jre \
+            imagemagick \
+            poppler-utils \
+            mupdf-tools \
+            ffmpeg
+  install_bundle_dependencies: &install_bundle_dependencies
+    run:
+      name: Install gem dependencies
+      command: |
+        gem install bundler-audit && bundle audit update
+        bundle check --path=~/app/vendor/bundle || bundle install
+  setup_database: &setup_database
+    run:
+      name: Setup database
+      command: |
+        cp ~/app/config/database.ci.yml ~/app/config/database.yml
+        ~/app/bin/bundle exec rake db:create db:migrate
+  run_bundle_audit: &run_bundle_audit
+    run:
+      name: Run bundle audit
+      command: ~/app/bin/bundle audit
+  run_brakeman: &run_brakeman
+    run:
+      name: Run brakeman
+      command: ~/app/bin/bundle exec brakeman
+  run_rubocop: &run_rubocop
+    run:
+      name: Run rubocop lints
+      command: |
+        ~/app/bin/bundle exec rubocop \
+        --require rubocop/formatter/junit_formatter \
+        --format RuboCop::Formatter::JUnitFormatter -o ${CIRCLE_TEST_REPORTS}/rubocop.xml
+  run_rspec: &run_rspec
+    run:
+      name: Run rspec tests
+      command: |
+        ~/app/bin/bundle exec rspec -r rspec_junit_formatter \
+        --format RspecJunitFormatter -o ${CIRCLE_TEST_REPORTS}/rspec.xml || "${ALLOW_FAILURE}" == "true"
+  wait_for_db: &wait_for_db
+    run:
+      name: Wait for DB
+      command: dockerize -wait tcp://localhost:5432 -timeout 1m
+  restore_repo: &restore_repo
+    restore_cache:
+      name: Restore repo Cache
+      keys:
+        - v1-repo-{{ .Environment.CIRCLE_SHA1 }}
+jobs:
+  checkout_code:
+    <<: *ruby_container
+    steps:
+      - checkout
+      - save_cache:
+          name: Store repo cache
+          key: v1-repo-{{ .Environment.CIRCLE_SHA1 }}
+          paths:
+            - *workspace_root
+  test-rails_6_0:
+    parallelism: 1
+    <<: *ruby_container
+    steps:
+      - *restore_repo
+      - restore_cache:
+          name: Restore bundle cache
+          keys:
+            - v1-rails-6-0-bundle-{{ .Branch }}-{{ checksum "Gemfile" }}
+      - *install_apt_dependencies
+      - *install_bundle_dependencies
+      - save_cache:
+          name: Store bundle cache
+          key: v1-rails-6-0-bundle-{{ .Branch }}-{{ checksum "Gemfile" }}
+          paths:
+            - ~/app/vendor/bundle
+      - *wait_for_db
+      - *setup_database
+      - *run_bundle_audit
+      - *run_brakeman
+      - *run_rubocop
+      - *run_rspec
+      - store_artifacts:
+          path: /tmp/test-artifacts
+          destination: rails-6-0-test-artifacts
+      - store_artifacts:
+          path: /tmp/test-results
+          destination: rails-6-0-raw-test-output
+      - store_test_results:
+          path: /tmp/test-results
+      - persist_to_workspace:
+          root: /tmp/test-artifacts
+          paths:
+            - coverage
+  send-test_coverage:
+    <<: *ruby_container
+    steps:
+      - *restore_repo
+      - attach_workspace:
+          at: /tmp/test-artifacts
+      - run:
+          name:  Download cc-test-reporter
+          command: |
+            mkdir -p tmp/
+            curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./tmp/cc-test-reporter
+            chmod +x ./tmp/cc-test-reporter
+      - run:
+          name: Setup ENVs
+          command: |
+            export GIT_BRANCH="$CIRCLE_BRANCH"
+            export GIT_COMMIT_SHA="$CIRCLE_SHA1"
+            export GIT_COMMITTED_AT="$(date +%s)"
+      - run:
+          name: Format test coverage
+          command: |
+            ./tmp/cc-test-reporter format-coverage \
+              -t simplecov \
+              -o tmp/codeclimate.www.json \
+              ${COVERAGE_DIR}/.resultset.json
+      - run:
+          name: Upload coverage results to Code Climate
+          command: |
+            ./tmp/cc-test-reporter sum-coverage tmp/codeclimate.*.json -p 1 -o tmp/codeclimate.total.json
+            ./tmp/cc-test-reporter upload-coverage -i tmp/codeclimate.total.json
+workflows:
+  version: 2
+  test-build-release:
+    jobs:
+      - checkout_code
+      - test-rails_6_0:
+          requires:
+            - checkout_code
+      - send-test_coverage:
+          requires:
+            - test-rails_6_0
