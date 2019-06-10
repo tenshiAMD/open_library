@@ -18,7 +18,7 @@ Devise.setup do |config|
   # Configure the e-mail address which will be shown in Devise::Mailer,
   # note that it will be overwritten if you use your own mailer class
   # with default "from" parameter.
-  config.mailer_sender = Rails.application.credentials.devise_mailer_url
+  config.mailer_sender = Rails.application.credentials.dig(:devise, :mailer_from) # rubocop:disable Metrics/LineLength
 
   # Configure the class responsible to send e-mails.
   # config.mailer = 'Devise::Mailer'
@@ -114,7 +114,7 @@ Devise.setup do |config|
   config.stretches = Rails.env.test? ? 1 : 11
 
   # Set up a pepper to generate the hashed password.
-  # config.pepper = '975cbdae269ff0b7cf4c728fe81293a7b56119c62e90d2865eedc4dd34a62144091ecff1b066e296c41044c5608afdc2e5f554170a0f6158f91a0ff74f8d65bf'
+  config.pepper = Rails.application.credentials.dig(:devise, :secret_paper)
 
   # Send a notification to the original email when the user's email is changed.
   # config.send_email_changed_notification = false
