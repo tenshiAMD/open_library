@@ -130,6 +130,87 @@ references:
       name: Create coverage directory
       command: |
         mkdir -p ${COVERAGE_DIR}
+  prepare_database: &prepare_database
+    run:
+      name: Prepare DB
+      command: bin/rails db:schema:load --trace
+  precompile_assets: &precompile_assets
+    run:
+      name: Precompile assets
+      command: |
+        rm -rf public/assets && \
+        RAILS_MASTER_KEY=${RAILS_MASTER_KEY_PRODUCTION} \
+        RAILS_ENV=production \
+        RAILS_GROUPS=assets \
+        bundle exec rake assets:precompile
+  install_container_test: &install_container_test
+    run:
+      name: Install Container Structure Tests
+      command: |
+        curl -LO https://storage.googleapis.com/container-structure-test/latest/container-structure-test-linux-amd64 \
+          && chmod +x container-structure-test-linux-amd64 \
+          && mv container-structure-test-linux-amd64 \
+            /usr/local/bin/container-structure-test
+        container-structure-test version
+        mkdir -p ${CIRCLE_TEST_REPORTS}
+  test_docker_image: &test_docker_image
+    run:
+      name: Test docker image
+      command: |
+        container-structure-test test \
+          --image app:latest \
+          --config docker/app.yml \
+          --test-report ${CIRCLE_TEST_REPORTS}/app.json
+  setup_gcloud: &setup_gcloud
+    run:
+      name: Setup Google Cloud and environment
+      command: |
+        echo ${GCLOUD_SERVICE_KEY} > ${HOME}/gcloud-service-key.json && \
+          gcloud auth activate-service-account --key-file ${HOME}/gcloud-service-key.json && \
+          gcloud --quiet config set project ${GOOGLE_PROJECT_ID}
+  setup_gcloud_docker: &setup_gcloud_docker
+    run:
+      name: Setup Google Cloud for Docker
+      command: |
+        gcloud --quiet auth configure-docker && \
+          docker login -u _json_key --password-stdin https://gcr.io < ${HOME}/gcloud-service-key.json && \
+          echo 'export DOCKER_ENDPOINT="asia.gcr.io/${GOOGLE_PROJECT_ID}"' >> $BASH_ENV
+  load_docker_image_layer: &load_docker_image_layer
+    run:
+      name: Load Docker image layer cache
+      command: |
+        set +o pipefail
+        docker load -i /home/circleci/app.tar | true
+  build_docker_image: &build_docker_image
+    run:
+      name: Build Docker image
+      command: |
+        docker build -t app \
+          --cache-from=app\
+          --build-arg BUILD_REVISION=${CIRCLE_SHA1} \
+          --build-arg BUILD_CREATED=$(date -u +"%Y-%m-%dT%H:%M:%SZ") .
+  save_docker_image_layer: &save_docker_image_layer
+    run:
+      name: Save Docker image layer cache
+      command: docker save -o /home/circleci/app.tar app
+  release_docker_image: &release_docker_image
+    run:
+      name: Release docker image
+      command: |
+        docker tag app $DOCKER_ENDPOINT:$(git rev-parse --short HEAD) && \
+          docker push $DOCKER_ENDPOINT:$(git rev-parse --short HEAD)
+  install_sentry: &install_sentry
+    run:
+      name: Install Sentry CLI
+      command:  |
+        curl -sL https://sentry.io/get-cli/ | bash
+        sentry-cli info
+  install_test_cc_reporter: &install_test_cc_reporter
+    run:
+      name: Install Code Climate Test Reporter
+      command: |
+        curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
+        chmod +x ./cc-test-reporter
 jobs:
   checkout_code:
     <<: *ruby_container
@@ -168,6 +249,7 @@ jobs:
       - *run_rubocop
       - *run_rspec
       - *create_coverage_directory
+      - *precompile_assets
       - store_artifacts:
           path: /tmp/test-artifacts
           destination: rails-6-0-test-artifacts
@@ -296,6 +378,54 @@ jobs:
           command: |
             ./tmp/cc-test-reporter sum-coverage tmp/codeclimate.*.json -p 1 -o tmp/codeclimate.total.json
             ./tmp/cc-test-reporter upload-coverage -i tmp/codeclimate.total.json
+  build-docker_image:
+    docker:
+      - image: google/cloud-sdk
+        environment:
+          CIRCLE_TEST_REPORTS: /tmp/test-results
+      - *database_container
+    working_directory: /home/circleci/app
+    steps:
+      - attach_workspace:
+          at: /home/circleci
+      - setup_remote_docker
+      - restore_cache:
+          name: Restore Docker image layer cache
+          keys:
+            - v2-docker-ruby-2.6-{{ .Branch }}-{{ checksum "Dockerfile" }}
+      - *load_docker_image_layer
+      - *setup_gcloud
+      - *setup_gcloud_docker
+      - *build_docker_image
+      - *install_container_test
+      - *test_docker_image
+      - *save_docker_image_layer
+      - save_cache:
+          key: v2-docker-ruby-2.6-{{ .Branch }}-{{ checksum "Dockerfile" }}
+          paths:
+            - /home/circleci/app.tar
+      - persist_to_workspace:
+          root: /home/circleci
+          paths:
+            - app.tar
+            - app
+  release-docker_image:
+    docker:
+      - image: google/cloud-sdk
+    working_directory: /home/circleci/app
+    steps:
+      - setup_remote_docker
+      - *setup_gcloud
+      - *setup_gcloud_docker
+      - attach_workspace:
+          at: /home/circleci
+      - *load_docker_image_layer
+      - *release_docker_image
+      - run:
+          name: Release default docker image
+          command: |
+            docker tag app $DOCKER_ENDPOINT:latest && \
+              docker push $DOCKER_ENDPOINT:latest
 workflows:
   version: 2
   test-build-release:
@@ -321,3 +451,18 @@ workflows:
       - send-test_coverage:
           requires:
             - test-rails_6_0
+      - build-docker_image:
+          requires:
+            - test-rails_6_0
+      - request-release-docker_image:
+          type: approval
+          requires:
+            - build-docker_image
+          filters:
+            branches:
+              only:
+                - master
+                - /.*-stable/
+      - release-docker_image:
+          requires:
+            - request-release-docker_image
