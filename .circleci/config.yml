@@ -61,6 +61,11 @@ references:
       command: |
         gem install bundler-audit && bundle audit update
         bundle check --path=~/app/vendor/bundle || bundle install || "${ALLOW_FAILURE}" == "true"
+  setup_configurations: &setup_configurations
+    run:
+      name: Setup configurations
+      command: |
+        cp config/credentials/test.yml.enc config/credentials.yml.enc
   setup_database: &setup_database
     run:
       name: Setup database
@@ -156,6 +161,7 @@ jobs:
       - *cache_yarn_packages
       - *wait_for_db
       - *wait_for_elasticsearch
+      - *setup_configurations
       - *setup_database
       - *run_bundle_audit
       - *run_brakeman
@@ -196,6 +202,7 @@ jobs:
             - ~/app/vendor/bundle
       - *install_yarn_packages
       - *cache_yarn_packages
+      - *setup_configurations
       - *wait_for_db
       - *wait_for_elasticsearch
       - *setup_database
@@ -240,6 +247,7 @@ jobs:
       - *cache_yarn_packages
       - *wait_for_db
       - *wait_for_elasticsearch
+      - *setup_configurations
       - *setup_database
       - *run_bundle_audit
       - *run_brakeman
