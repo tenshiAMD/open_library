@@ -7,13 +7,13 @@ OkComputer::OkComputerController.class_eval do
   force_ssl except: :index if ENV["STATS_SSL"] == true
 end
 
-# rubocop:disable Metrics/LineLength
 ELASTICSEARCH_URL = Rails.application.credentials.dig(:elasticsearch_url)
 OkComputer::Registry.register "elasticsearch",
-                              OkComputer::ElasticsearchCheck.new(ELASTICSEARCH_URL)
+                              OkComputer::ElasticsearchCheck.new(ELASTICSEARCH_URL) # rubocop:disable Metrics/LineLength
 
-OkComputer::Registry.register "mailer",
-                              OkComputer::ActionMailerCheck.new(ActionMailer::Base)
-# rubocop:enable Metrics/LineLength
+if ActionMailer::Base.smtp_settings[:address].present?
+  OkComputer::Registry.register "mailer",
+                                OkComputer::ActionMailerCheck.new(ActionMailer::Base) # rubocop:disable Metrics/LineLength
 
-OkComputer.make_optional %w(mailer)
+  OkComputer.make_optional %w(mailer)
+end
