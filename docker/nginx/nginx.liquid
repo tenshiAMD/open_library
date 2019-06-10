@@ -1,0 +1,245 @@
+user nginx nginx;
+
+# One worker process per CPU core.
+worker_processes 1;
+
+# number of file descriptors used for nginx
+# the limit for the maximum FDs on the server is usually set by the OS.
+# if you don't set FD's then OS settings will be used which is by default 2000
+worker_rlimit_nofile 100000;
+
+pid /var/{{ APP_USER }}/run/nginx.pid;
+
+events {
+  #
+  # Determines how many clients will be served by each worker process.
+  # (Max clients = worker_connections * worker_processes)
+  # Should be equal to `ulimit -n`
+  #
+  worker_connections {{ RAILS_MAX_THREADS | times: WEB_CONCURRENCY }};
+
+  #
+  # Let each process accept multiple connections.
+  # Accept as many connections as possible, after nginx gets notification
+  # about a new connection.
+  # May flood worker_connections, if that option is set too low.
+  #
+  multi_accept on;
+
+  #
+  # Preferred connection method for newer linux versions.
+  # Essential for linux, optimized to serve many clients with each thread.
+  #
+  # use epoll;
+}
+
+http {
+  # Just For Security Reason
+  server_tokens off;
+
+  #
+  # Override some buffer limitations, will prevent DDOS too.
+  #
+  client_body_buffer_size 10K;
+  client_header_buffer_size 1k;
+  client_max_body_size 250m;
+  large_client_header_buffers 4 16k;
+
+  #
+  # Timeouts
+  # The client_body_timeout and client_header_timeout directives are
+  # responsible for the time a server will wait for a client body or
+  # client header to be sent after request. If neither a body or header
+  # is sent, the server will issue a 408 error or Request time out.
+  #
+  # The keepalive_timeout assigns the timeout for keep-alive connections
+  # with the client. Simply put, Nginx will close connections with the
+  # client after this period of time.
+  #
+  # Finally, the send_timeout is a timeout for transmitting a response
+  # to the client. If the client does not receive anything within this
+  # time, then the connection will be closed.
+  #
+
+  #
+  # send the client a "request timed out" if the body is not loaded
+  # by this time. Default 60.
+  #
+  client_body_timeout   32;
+  client_header_timeout 32;
+
+  #
+  # Every 60 seconds server broadcasts Sync packets, so 90 is
+  # a conservative upper bound.
+  #
+  keepalive_timeout 90; # default 65
+  keepalive_requests 100000;
+  send_timeout 120; # default 60
+
+  #
+  # Allow the server to close the connection after a client stops
+  # responding.
+  # Frees up socket-associated memory.
+  #
+  reset_timedout_connection on;
+
+  #
+  # Open file descriptors.
+  # Caches information about open FDs, freqently accessed files.
+  #
+  open_file_cache max=200000 inactive=20s;
+  open_file_cache_valid 30s;
+  open_file_cache_min_uses 2;
+  open_file_cache_errors on;
+
+  #
+  # Sendfile copies data between one FD and other from within the kernel.
+  # More efficient than read() + write(), since the requires transferring
+  # data to and from the user space.
+  #
+  sendfile on;
+
+  # Tcp_nopush causes nginx to attempt to send its HTTP response head in one
+  # packet, instead of using partial frames. This is useful for prepending
+  # headers before calling sendfile, or for throughput optimization.
+  tcp_nopush on;
+
+  #
+  # don't buffer data-sends (disable Nagle algorithm). Good for sending
+  # frequent small bursts of data in real time.
+  #
+  tcp_nodelay on;
+
+  types_hash_max_size 2048;
+
+  include /etc/nginx/mime.types;
+  default_type application/octet-stream;
+
+  ##
+  # Logging Settings
+  ##
+
+  # Include $http_x_forwarded_for within default format used in log files
+  log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
+                    '$status $body_bytes_sent "$http_referer" '
+                    '"$http_user_agent" "$http_x_forwarded_for"';
+
+  #
+  # Use analytics to track stuff instead of using precious file IO resources.
+  # Disabling logging speeds up IO.
+  #
+  access_log "{% if NGINX_ACCESS_LOG %}{{NGINX_ACCESS_LOG}}{% else %}off{% endif %}";
+  error_log "{% if NGINX_ERROR_LOG %}{{NGINX_ERROR_LOG}}{% else %}/dev/stdout crit{% endif %}";
+
+  ##
+  # Gzip Settings
+  ##
+  gzip on;
+  gzip_disable "MSIE [1-6]\.";
+
+  # Compress data even for clients that are connecting to us via proxies,
+  # identified by the "Via" header (required for CloudFront).
+  # Default: off
+  gzip_proxied any;
+
+  # Default is 6 (1<n<9), but 2 -- even 1 -- is enough. The higher it is, the
+  # more CPU cycles will be wasted.
+  gzip_comp_level 5;
+  gzip_min_length 256; # Default 20
+
+  # Compress all output labeled with one of the following MIME-types.
+  # text/html is always compressed by gzip module.
+  # Default: text/html
+  gzip_types
+    application/atom+xml
+    application/javascript
+    application/json
+    application/ld+json
+    application/manifest+json
+    application/rss+xml
+    application/vnd.geo+json
+    application/vnd.ms-fontobject
+    application/x-font-ttf
+    application/x-web-app-manifest+json
+    application/xhtml+xml
+    application/xml
+    font/opentype
+    image/bmp
+    image/svg+xml
+    image/x-icon
+    text/cache-manifest
+    text/css
+    text/plain
+    text/vcard
+    text/vnd.rim.location.xloc
+    text/vtt
+    text/x-component
+    text/x-cross-domain-policy;
+
+  ##
+  # Virtual Host
+  ##
+  upstream app_server {
+    server unix:///var/{{ APP_USER }}/run/puma.sock;
+  }
+
+  server {
+    listen [::]:80 default deferred;
+    listen 80 default deferred;
+    server_name _;
+
+    # path to app's public directory
+    set $public {% if APP_HOME %}{{APP_HOME}}{% else %}{{PWD}}{% endif %}/public;
+
+    root $public;
+
+    # bypass rails stack with a cheap 204 for favicon.ico requests
+    location ^~ /(apple-touch-icon|favicon|mstile) {
+      access_log off;
+      log_not_found off;
+      try_files $uri =404;
+      break;
+    }
+
+    location / {
+      location /cable {
+        proxy_pass http://app_server;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "Upgrade";
+
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header Host $http_host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_redirect off;
+      }
+
+      # Include the basic h5bp config set
+      include conf.d/directive-only/x-ua-compatible.conf;
+      include conf.d/location/protect-system-files.conf;
+
+      # this means every file in public is tried first
+      try_files $uri @app;
+    }
+
+    location @app {
+      proxy_set_header X-Request-ID $request_id; # Pass to app server
+      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+      proxy_set_header Host $http_host;
+      proxy_redirect off;
+      proxy_pass http://app_server;
+
+      proxy_connect_timeout 75s;
+      proxy_send_timeout 120s;
+      proxy_read_timeout 120s;
+    }
+
+    error_page 401 403 404 /404.html;
+    error_page 500 502 503 504 /50x.html;
+    location ~* ^/(404|50x)\.html$ {
+      root $public;
+      internal;
+    }
+  }
+}

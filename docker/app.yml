@@ -1,0 +1,50 @@
+schemaVersion: "2.0.0"
+commandTests:
+  - name: "bundle check"
+    command: "bin/bundle"
+    args: ["check"]
+    expectedOutput: ["The Gemfile's dependencies are satisfied"]
+  - name: "bundle frozen"
+    command: "bin/bundle"
+    args: ["config", "frozen"]
+    expectedOutput: ['Set for the current user .* true']
+fileExistenceTests:
+  - name: 'config/master.key'
+    path: '/home/app/config/master.key'
+    shouldExist: false
+  - name: 'start-app.sh'
+    path: '/usr/local/bin/start-app.sh'
+    shouldExist: true
+    permissions: '-rwxr-xr-x'
+    uid: 0
+    gid: 0
+    isExecutableBy: 'group'
+  - name: 'check-app.sh'
+    path: '/usr/local/bin/check-app.sh'
+    shouldExist: true
+    permissions: '-rwxr-xr-x'
+    uid: 0
+    gid: 0
+    isExecutableBy: 'group'
+fileContentTests:
+  - name: 'start-app.sh'
+    path: '/usr/local/bin/start-app.sh'
+    expectedContents: ['bin/foreman start']
+  - name: 'check-app.sh'
+    path: '/usr/local/bin/check-app.sh'
+    expectedContents: ['curl -f -u .* http://localhost:80/health/all']
+metadataTest:
+  env:
+    - key: BUNDLE_PATH
+      value: /home/app/vendor/bundle
+    - key: RAILS_ENV
+      value: production
+    - key: RACK_ENV
+      value: production
+    - key: APP_ID
+      value: open_library
+  exposedPorts: ["80"]
+  volumes: ["/var/app"]
+  entrypoint: ["/usr/local/bin/entrypoint.sh"]
+  cmd: ["/usr/local/bin/start-app.sh"]
+  workdir: "/home/app"

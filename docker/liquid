@@ -1,0 +1,13 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "liquid"
+require "fileutils"
+
+template_path, destination_path = ARGV
+
+raise "Template not specified" unless File.file?(template_path)
+raise "Destination not specified" if destination_path.empty?
+
+template = Liquid::Template.parse(File.read(template_path))
+File.write(destination_path, template.render(ENV.to_h))

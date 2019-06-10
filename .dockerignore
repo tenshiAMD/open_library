@@ -1,11 +1,36 @@
-.idea
-.git
+.DS_Store
+.byebug_history
 .env
+.env.*
+.gitignore
+.idea
+.rubocop*
+.bundle
+.Gemfile
+.git
+.circleci
+.github
+.cache
+.config
+.yarn
+.yarnrc
+.bash_history
+.yarn-error.log*
+.npm
+coverage
+test_results
+.rubocop*
+.rubocop-https---*
+*.log
 
+## Docker
 .dockerignore
 docker-*.yml
 docker/data
 
+## Rails
+config/credentials/*.key
+config/*.key
 db/*
 !db/migrate
 !db/seeds.rb
@@ -25,3 +50,6 @@ public/*
 !public/apple-touch-*.png
 !public/favicon.ico
 !public/robots.txt
+!public/assets
+!public/packs
+node_modules
