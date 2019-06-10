@@ -10,6 +10,8 @@ else
   gem "rails", rails_version # rubocop:disable Bundler/DuplicatedGem
 end
 
+gem "google-cloud-storage", "~> 1.11", require: false
+
 ## Rails Essentials
 ## Reduces boot times through caching; required in config/boot.rb
 gem "bootsnap", ">= 1.4.2", require: false
