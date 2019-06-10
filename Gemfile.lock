@@ -323,6 +323,7 @@ GEM
     notiffany (0.1.1)
       nenv (~> 0.1)
       shellany (~> 0.0)
+    okcomputer (1.17.4)
     orm_adapter (0.5.0)
     os (1.0.1)
     overcommit (0.48.0)
@@ -584,6 +585,7 @@ DEPENDENCIES
   magic_lamp
   mocha
   mysql2
+  okcomputer
   overcommit
   pg (~> 0.21)
   puma (~> 3.11)

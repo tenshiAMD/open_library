@@ -18,6 +18,7 @@ gem "bootsnap", ">= 1.4.2", require: false
 gem "concurrent-ruby", "~> 1.1.5"
 gem "foreman"
 gem "image_processing", "~> 1.2"
+gem "okcomputer"
 gem "puma", "~> 3.11"
 gem "webpacker", "~> 4.0"
 

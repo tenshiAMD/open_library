@@ -45,3 +45,5 @@ rescue LoadError
   # Do nothing
 end
 # rubocop:enable Lint/HandleExceptions
+
+OkComputer::Registry.register "redis", OkComputer::RedisCheck.new(url: REDIS_URL) # rubocop:disable Metrics/LineLength
