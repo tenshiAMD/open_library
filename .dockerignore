@@ -27,6 +27,8 @@ test_results
 .dockerignore
 docker-*.yml
 docker/data
+Dockerfile
+Dockerfile*.generated
 
 ## Rails
 config/credentials/*.key
