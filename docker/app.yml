@@ -2,7 +2,7 @@ schemaVersion: "2.0.0"
 commandTests:
   - name: "bundle check"
     command: "bin/bundle"
-    args: ["check"]
+    args: ["check", "--path=${BUNDLE_PATH}"]
     expectedOutput: ["The Gemfile's dependencies are satisfied"]
   - name: "bundle frozen"
     command: "bin/bundle"
