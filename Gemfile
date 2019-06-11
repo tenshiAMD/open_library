@@ -27,7 +27,7 @@ gem "mysql2"
 gem "pg", "~> 0.21"
 gem "sqlite3", "~> 1.4"
 
-gem "activeadmin", git: "https://github.com/activeadmin/activeadmin"
+gem "activeadmin", "~> 2.0.0"
 gem "devise", "~> 4.6.2"
 
 gem "sidekiq"
