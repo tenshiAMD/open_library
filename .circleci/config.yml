@@ -249,6 +249,11 @@ jobs:
       - *run_rubocop
       - *run_rspec
       - *create_coverage_directory
+      - run:
+          name: Setup configurations for production
+          command: |
+            rm -rf config/credentials.yml.enc tmp/* log/*
+            cp config/credentials/production.yml.enc config/credentials.yml.enc
       - *precompile_assets
       - store_artifacts:
           path: /tmp/test-artifacts
