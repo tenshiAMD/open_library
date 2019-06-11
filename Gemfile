@@ -28,7 +28,7 @@ gem "pg", "~> 0.21"
 gem "sqlite3", "~> 1.4"
 
 gem "activeadmin", git: "https://github.com/activeadmin/activeadmin"
-gem "devise", git: "https://github.com/plataformatec/devise"
+gem "devise", "~> 4.6.2"
 
 gem "sidekiq"
 gem "yell"
