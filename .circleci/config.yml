@@ -254,6 +254,7 @@ jobs:
           command: |
             rm -rf config/credentials.yml.enc tmp/* log/*
             cp config/credentials/production.yml.enc config/credentials.yml.enc
+      - *install_bundle_dependencies
       - *precompile_assets
       - store_artifacts:
           path: /tmp/test-artifacts
