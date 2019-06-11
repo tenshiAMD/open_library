@@ -174,7 +174,7 @@ references:
       command: |
         gcloud --quiet auth configure-docker && \
           docker login -u _json_key --password-stdin https://gcr.io < ${HOME}/gcloud-service-key.json && \
-          echo 'export DOCKER_ENDPOINT="asia.gcr.io/${GOOGLE_PROJECT_ID}"' >> $BASH_ENV
+          echo 'export DOCKER_ENDPOINT="asia.gcr.io/${GOOGLE_PROJECT_ID}/angel"' >> $BASH_ENV
   load_docker_image_layer: &load_docker_image_layer
     run:
       name: Load Docker image layer cache
