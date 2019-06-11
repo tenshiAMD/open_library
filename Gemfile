@@ -34,8 +34,8 @@ gem "sidekiq"
 gem "yell"
 
 ## Search Engine
-gem "elasticsearch-model", github: "elastic/elasticsearch-rails", branch: "5.x"
-gem "elasticsearch-rails", github: "elastic/elasticsearch-rails", branch: "5.x"
+gem "elasticsearch-model", "~> 5.1.0"
+gem "elasticsearch-rails", "~> 5.1.0"
 
 ## Views
 gem "bootstrap", "~> 4.3.1"
