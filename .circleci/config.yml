@@ -262,6 +262,10 @@ jobs:
           root: /tmp/test-artifacts
           paths:
             - coverage
+      - persist_to_workspace:
+          root: /home/circleci
+          paths:
+            - app
   test-rails_6_0_stable:
     parallelism: 1
     <<: *ruby_container
@@ -392,7 +396,7 @@ jobs:
       - restore_cache:
           name: Restore Docker image layer cache
           keys:
-            - v2-docker-ruby-2.6-{{ .Branch }}-{{ checksum "Dockerfile" }}
+            - v1-docker-ruby-2.6-{{ .Branch }}-{{ checksum "Dockerfile" }}
       - *load_docker_image_layer
       - *setup_gcloud
       - *setup_gcloud_docker
@@ -401,7 +405,7 @@ jobs:
       - *test_docker_image
       - *save_docker_image_layer
       - save_cache:
-          key: v2-docker-ruby-2.6-{{ .Branch }}-{{ checksum "Dockerfile" }}
+          key: v1-docker-ruby-2.6-{{ .Branch }}-{{ checksum "Dockerfile" }}
           paths:
             - /home/circleci/app.tar
       - persist_to_workspace:
