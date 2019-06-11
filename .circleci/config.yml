@@ -418,6 +418,9 @@ jobs:
           paths:
             - app.tar
             - app
+      - store_artifacts:
+          path: /tmp/test-results
+          destination: docker-build-test-results
   release-docker_image:
     docker:
       - image: google/cloud-sdk
