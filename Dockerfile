@@ -236,6 +236,7 @@ ENV APP_NAME="Open Library" \
     RACK_ENV=production \
     BUNDLE_PATH=${APP_HOME}/vendor/bundle
 RUN bundle config --global frozen 1
+RUN bundle config --local path ${BUNDLE_PATH}
 
 ARG BUILD_CREATED
 ARG BUILD_REVISION
