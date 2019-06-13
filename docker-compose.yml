@@ -1,68 +1,86 @@
 version: "3.7"
 services:
   web:
-    image: tenshiamd/ruby:2.6
+    image: asia.gcr.io/open-library-243008/angel:latest
     deploy:
       replicas: 3
       restart_policy:
-        condition: ${WEB_RESTART_MODE}
+        condition: on-failure
     command: >
-      bash -c "bundle install &&
-      bundle exec puma -C config/puma.rb"
+      bin/foreman start -f Procfile-web
     environment:
-      - PORT=80
-      - RAILS_ENV=${WEB_RAILS_ENV}
-      - RAILS_VERSION=${WEB_RAILS_VERSION}
-      - RUBY_VERSION=${WEB_RUBY_VERSION}
-    expose:
-      - 80
-    volumes:
-      - .:/var/www
+      - RAILS_MASTER_KEY=${WEB_RAILS_MASTER_KEY}
+      - HEALTH_CHECK_AUTH=${WEB_HEALTH_CHECK_AUTH}
+      - DB_HOST=${DB_HOST}
+      - DB_USERNAME=${DB_USERNAME}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - ELASTICSEARCH_URL=${ELASTICSEARCH_URL}
+      - REDIS_URL=${REDIS_URL}
+    depends_on:
+      - redis
+      - postgresql
+      - elasticsearch
     networks:
       - back_tier
-  load_balancer:
-    image: dockercloud/haproxy
-    deploy:
-      replicas: 1
-      restart_policy:
-        condition: ${WEB_RESTART_MODE}
-    links:
-      - web
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
     ports:
       - ${WEB_RAILS_PORT}:80
-    networks:
-      - back_tier
-      - front_tier
-  elasticsearch:
-    image: elasticsearch:6.7.2
-    ports:
-      - 9200:9200
-      - 9300:9300
-    environment:
-      - discovery.type=single-node
   postgresql:
     image: sameersbn/postgresql:latest
     deploy:
       replicas: 1
       restart_policy:
-        condition: ${PG_RESTART_MODE}
+        condition: on-failure
     environment:
-      - PG_PASSWORD=${PG_PASSWORD}
+      - PG_PASSWORD=${DB_PASSWORD}
+    networks:
+      - back_tier
     volumes:
       - ./docker/data/postgresql:/var/lib/postgresql
+  elasticsearch:
+    image: elasticsearch:6.7.2
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+    environment:
+      - discovery.type=single-node
+    networks:
+      - back_tier
+    volumes:
+      - ./docker/data/elasticsearch:/usr/share/elasticsearch/data
   redis:
     image: tenshiamd/redis:5-alpine
     deploy:
       replicas: 1
       restart_policy:
-        condition: ${REDIS_RESTART_MODE}
+        condition: on-failure
     command: redis-server
     networks:
       - back_tier
     volumes:
       - ./docker/data/redis:/var/lib/redis
+  worker:
+    image: asia.gcr.io/open-library-243008/angel:latest
+    deploy:
+      replicas: 2
+      restart_policy:
+        condition: on-failure
+    command: >
+      bash -c "mkdir -p tmp/pids && bin/foreman start -f Procfile-worker"
+    environment:
+      - RAILS_MASTER_KEY=${WEB_RAILS_MASTER_KEY}
+#      - HEALTH_CHECK_AUTH=${WORKER_HEALTH_CHECK_AUTH}
+      - DB_HOST=${DB_HOST}
+      - DB_USERNAME=${DB_USERNAME}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - ELASTICSEARCH_URL=${ELASTICSEARCH_URL}
+      - REDIS_URL=${REDIS_URL}
+    depends_on:
+      - elasticsearch
+      - postgresql
+      - redis
+    networks:
+      - back_tier
 networks:
   back_tier:
     driver: bridge
