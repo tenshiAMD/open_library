@@ -220,6 +220,7 @@ RUN rm -rf ${APP_HOME}/*
 COPY . ${APP_HOME}/
 RUN mkdir -p log tmp \
     && rm -rf log/* tmp/* \
+    && mkdir -p tmp/pids \
     && chown -R ${APP_USER}:${APP_USER} \
         ${APP_HOME}
 
