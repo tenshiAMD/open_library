@@ -70,7 +70,6 @@ references:
     run:
       name: Setup database
       command: |
-        cp ~/app/config/database.ci.yml ~/app/config/database.yml
         ~/app/bin/bundle exec rake db:create db:migrate || "${ALLOW_FAILURE}" == "true"
   run_bundle_audit: &run_bundle_audit
     run:
