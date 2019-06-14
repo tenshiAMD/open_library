@@ -7,8 +7,7 @@ development:
   adapter: postgresql
   host: <%= ENV['DB_HOST'] || 'localhost' %>
   username: <%= ENV['DB_USERNAME'] || 'postgres' %>
-  password: <%= ENV['DB_PASSWORD'] || 'postgres' %>
-  database: open_library_development
+  database: <%= ENV['DB_NAME'] || 'open_library_development' %>
 
 # Warning: The database defined as "test" will be erased and
 # re-generated from your development database when you run "rake".
@@ -18,7 +17,7 @@ test:
   adapter: postgresql
   host: <%= ENV['DB_HOST'] || 'localhost' %>
   username: <%= ENV['DB_USERNAME'] || 'postgres' %>
-  database: open_library_test
+  database:  <%= ENV['DB_NAME'] || 'open_library_test' %>
 
 production:
   <<: *default
@@ -26,4 +25,4 @@ production:
   host: <%= ENV['DB_HOST'] || 'localhost' %>
   username: <%= ENV['DB_USERNAME'] || 'postgres' %>
   password: <%= ENV['DB_PASSWORD'] || 'postgres' %>
-  database: open_library_amd
+  database: <%= ENV['DB_NAME'] || 'open_library_angel' %>
