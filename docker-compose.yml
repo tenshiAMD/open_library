@@ -46,8 +46,6 @@ services:
       - discovery.type=single-node
     networks:
       - back_tier
-    volumes:
-      - ./docker/data/elasticsearch:/usr/share/elasticsearch/data
   redis:
     image: tenshiamd/redis:5-alpine
     deploy:
